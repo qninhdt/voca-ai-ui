@@ -7,5 +7,5 @@ export default [
   route("deck/:id", "routes/deck.tsx"),
   route("learn/:id", "routes/learn.tsx"),
   route("profile", "routes/profile.tsx"),
-  route("quiz/:id", "routes/quiz.tsx"),
+  route("quiz/:id", "routes/full-quiz.tsx"),
 ] satisfies RouteConfig;
