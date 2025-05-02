@@ -7,5 +7,7 @@ export default [
   route("deck/:id", "routes/deck.tsx"),
   route("learn/:id", "routes/learn.tsx"),
   route("profile", "routes/profile.tsx"),
-  route("quiz/:id", "routes/quiz.tsx"),
+  route("quiz/:id", "routes/full-quiz.tsx"),
+  route("dictionary", "routes/dictionary.tsx"),
+  route("dictionary/:word", "routes/word-definition.tsx"),
 ] satisfies RouteConfig;

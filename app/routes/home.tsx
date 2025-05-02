@@ -85,7 +85,7 @@ export default function HomePage() {
         <div className="space-y-3">
           {recentSets.map((set) => (
             <Link to={`/deck/${set.id}`} key={set.id}>
-              <div className="bg-[#252525] rounded-xl p-4 border-l-4 border-[#F5B700]">
+              <div className="bg-[#252525] rounded-xl p-4 mb-3 border-l-4 border-[#F5B700]">
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="font-medium">{set.title}</h3>

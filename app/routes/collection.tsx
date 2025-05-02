@@ -52,7 +52,7 @@ export default function CollectionPage() {
       {/* Tabs */}
       <Tabs defaultValue="flashcards" className="w-full">
         <div className="px-4 mb-4">
-          <TabsList className="bg-[#252525] p-1 rounded-xl w-full grid grid-cols-4">
+          <TabsList className="bg-[#252525] p-1 rounded-xl w-full grid grid-cols-2">
             <TabsTrigger
               value="flashcards"
               className="rounded-lg data-[state=active]:bg-[#F5B700] data-[state=active]:text-black"
@@ -67,20 +67,7 @@ export default function CollectionPage() {
               <FolderOpen className="h-4 w-4 mr-1" />
               Folders
             </TabsTrigger>
-            <TabsTrigger
-              value="practice"
-              className="rounded-lg data-[state=active]:bg-[#F5B700] data-[state=active]:text-black"
-            >
-              <Beaker className="h-4 w-4 mr-1" />
-              Tests
-            </TabsTrigger>
-            <TabsTrigger
-              value="classes"
-              className="rounded-lg data-[state=active]:bg-[#F5B700] data-[state=active]:text-black"
-            >
-              <GraduationCap className="h-4 w-4 mr-1" />
-              Classes
-            </TabsTrigger>
+
           </TabsList>
         </div>
 

@@ -65,26 +65,6 @@ export default function ProfileDrawer({ username, email, avatarUrl }: ProfileDra
               <span>Settings</span>
             </Link>
 
-            <Link
-              to="/subscription"
-              className="flex items-center px-6 py-4 hover:bg-[#252525] border-b border-[#333333]"
-              onClick={() => setOpen(false)}
-            >
-              <CreditCard className="h-5 w-5 text-[#F5B700] mr-3" />
-              <span>Manage subscription</span>
-            </Link>
-
-            <button
-              className="w-full flex items-center px-6 py-4 hover:bg-[#252525] border-b border-[#333333] text-left"
-              onClick={toggleTheme}
-            >
-              {theme === "dark" ? (
-                <Sun className="h-5 w-5 text-[#F5B700] mr-3" />
-              ) : (
-                <Moon className="h-5 w-5 text-[#F5B700] mr-3" />
-              )}
-              <span>{theme === "dark" ? "Light mode" : "Dark mode"}</span>
-            </button>
           </div>
 
           {/* Log Out */}

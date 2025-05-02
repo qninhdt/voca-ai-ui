@@ -1,6 +1,6 @@
 "use client"
 
-import { Home, BookOpen, Plus, MessageSquare, User } from "lucide-react"
+import { Home, BookOpen, Plus, MessageSquare, User, Search } from "lucide-react"
 import { Link } from "react-router"
 import { useState } from "react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
@@ -79,14 +79,13 @@ export default function BottomNavigation() {
             <MessageSquare className="h-5 w-5" />
             <span className="text-xs mt-1">AI Chat</span>
           </Link>
-
           <Link
-            to="/profile"
-            className={`flex flex-col items-center ${activeTab === "profile" ? "text-[#F5B700]" : "text-gray-400"}`}
-            onClick={() => setActiveTab("profile")}
+            to="/dictionary"
+            className={`flex flex-col items-center ${activeTab === "dictionary" ? "text-[#F5B700]" : "text-gray-400"}`}
+            onClick={() => setActiveTab("dictionary")}
           >
-            <User className="h-5 w-5" />
-            <span className="text-xs mt-1">Profile</span>
+            <Search className="h-5 w-5" />
+            <span className="text-xs mt-1">Dictionary</span>
           </Link>
         </div>
       </div>
