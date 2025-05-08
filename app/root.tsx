@@ -6,11 +6,14 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLocation,
+  useNavigate,
 } from "react-router"
 import { ThemeProvider } from "@/components/theme-provider"
 import type { Route } from "./+types/root"
 import "./app.css"
 import BottomNavigation from "./components/bottom-navigation"
+import { onAuthStateChange } from "./lib/firebase"
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -26,6 +29,23 @@ export const links: Route.LinksFunction = () => [
 ]
 
 export function Layout({ children }: { children: React.ReactNode }) {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const isWelcomePage =
+    location.pathname === "/welcome" ||
+    location.pathname === "/signup" ||
+    location.pathname === "/login"
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChange((user) => {
+      if (!user && !isWelcomePage) {
+        navigate("/welcome")
+      }
+    })
+
+    return () => unsubscribe()
+  }, [isWelcomePage, navigate])
+
   return (
     <html lang="en">
       <head>
@@ -37,10 +57,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <body className="bg-[#1A1A1A] text-white h-screen flex flex-col">
         <ThemeProvider defaultTheme="dark">
           <div className="flex flex-col h-full">
-            <main className="flex-1 overflow-y-auto">
+            <main className={`flex-1 ${!isWelcomePage ? "overflow-y-auto" : ""}`}>
               {children}
             </main>
-            <BottomNavigation />
+            {!isWelcomePage && <BottomNavigation />}
           </div>
         </ThemeProvider>
         <ScrollRestoration />

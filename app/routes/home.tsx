@@ -1,20 +1,121 @@
-import { useState } from "react"
-import { Search, BookOpen, Sparkles, Clock, TrendingUp } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Search, Filter, BookOpen, FolderOpen, Beaker, GraduationCap, Clock, Sparkles, TrendingUp } from "lucide-react"
 import { Link } from "react-router"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import ProfileDrawer from "@/components/profile-drawer"
+import { getUserDecks, getUserFolders } from "@/lib/firebase"
+import { auth } from "@/lib/firebase"
+import { Button } from "@/components/ui/button"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+
+interface Card {
+  id: string;
+  term: string;
+  definition: string;
+  mastery?: number;
+}
+
+interface Deck {
+  id: string;
+  title?: string;
+  description?: string;
+  cards?: Card[];
+  updatedAt?: { seconds: number };
+  createdAt?: { seconds: number };
+  userId: string;
+}
+
+interface Folder {
+  id: string;
+  name: string;
+  description?: string;
+  deckIds: string[];
+  userId: string;
+  updatedAt?: { seconds: number };
+  createdAt?: { seconds: number };
+}
 
 export default function HomePage() {
-  const [searchQuery, setSearchQuery] = useState("")
+  const [decks, setDecks] = useState<Deck[]>([])
+  const [folders, setFolders] = useState<Folder[]>([])
+  const [loading, setLoading] = useState(true)
+  const [masteryStats, setMasteryStats] = useState({
+    totalCards: 0,
+    masteredCards: 0,
+    learningCards: 0,
+    averageMastery: 0
+  })
 
-  const recentSets = [
-    { id: "1", title: "HP 1.6 - 1.7", terms: 67, author: "you" },
-    { id: "2", title: "Linux commands", terms: 49, author: "emilysingley" },
-    { id: "3", title: "Basic Linux commands", terms: 33, author: "brian_kozik" },
-    { id: "4", title: "HP 1.4 - 1.5", terms: 143, author: "you" },
-  ]
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        setLoading(true)
+        const [userDecks, userFolders] = await Promise.all([
+          getUserDecks(user.uid),
+          getUserFolders(user.uid)
+        ])
+        
+        // Sort decks by updatedAt desc, fallback to createdAt
+        const sortedDecks = userDecks
+          .slice()
+          .sort((a: Deck, b: Deck) => {
+            const aTime = a.updatedAt?.seconds || a.createdAt?.seconds || 0
+            const bTime = b.updatedAt?.seconds || b.createdAt?.seconds || 0
+            return bTime - aTime
+          })
+        
+        // Sort folders by updatedAt desc, fallback to createdAt
+        const sortedFolders = userFolders
+          .slice()
+          .sort((a: Folder, b: Folder) => {
+            const aTime = a.updatedAt?.seconds || a.createdAt?.seconds || 0
+            const bTime = b.updatedAt?.seconds || b.createdAt?.seconds || 0
+            return bTime - aTime
+          })
+
+        setDecks(sortedDecks)
+        setFolders(sortedFolders)
+        calculateMasteryStats(sortedDecks)
+        setLoading(false)
+      } else {
+        setDecks([])
+        setFolders([])
+        setLoading(false)
+      }
+    })
+
+    return () => unsubscribe()
+  }, [])
+
+  const calculateMasteryStats = (decks: Deck[]) => {
+    let totalCards = 0
+    let masteredCards = 0
+    let learningCards = 0
+    let totalMastery = 0
+
+    decks.forEach(deck => {
+      deck.cards?.forEach(card => {
+        totalCards++
+        const mastery = card.mastery || 0
+        totalMastery += mastery
+        if (mastery >= 4) {
+          masteredCards++
+        } else {
+          learningCards++
+        }
+      })
+    })
+
+    setMasteryStats({
+      totalCards,
+      masteredCards,
+      learningCards,
+      averageMastery: totalCards > 0 ? (totalMastery / totalCards) * 20 : 0 // Convert to percentage
+    })
+  }
 
   const recommendedSets = [
     { id: "5", title: "600 từ vựng toeic", terms: 305, author: "hgnam92" },
@@ -27,82 +128,134 @@ export default function HomePage() {
   ]
 
   return (
-    <div className="flex flex-col min-h-full bg-[#1A1A1A] text-white">
+    <div className="flex flex-col min-h-full bg-[#1A1A1A] text-white pb-16">
       {/* Header */}
       <header className="flex items-center justify-between p-4 bg-[#1A1A1A] border-b border-[#333333]">
         <div className="text-2xl font-bold text-[#F5B700]">VocaAI</div>
-        <div className="flex items-center gap-3">
-          <ProfileDrawer username="qninh" email="qndt123@gmail.com" />
-        </div>
+        <ProfileDrawer />
       </header>
 
-      {/* Search Bar */}
-      <div className="px-4 py-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-          <Input
-            type="text"
-            placeholder="Search for flashcards"
-            className="w-full bg-[#252525] border-none pl-10 text-gray-300 rounded-xl"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-      </div>
-
-      {/* Quick Stats */}
-      <div className="px-4 py-2">
-        <div className="bg-[#252525] rounded-xl p-4">
-          <h2 className="text-sm font-medium text-gray-400 mb-3">YOUR PROGRESS</h2>
-          <div className="flex justify-between items-center">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-[#F5B700]">12</div>
-              <div className="text-xs text-gray-400">Decks</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-[#F5B700]">347</div>
-              <div className="text-xs text-gray-400">Cards</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-[#F5B700]">85%</div>
-              <div className="text-xs text-gray-400">Mastered</div>
-            </div>
+      {/* Progress Section */}
+      <div className="p-4 space-y-4">
+        <h2 className="text-lg font-medium">Your Progress</h2>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="bg-[#252525] rounded-xl p-4">
+            <div className="text-sm text-gray-400 mb-1">Total Decks</div>
+            <div className="text-2xl font-medium">{decks.length}</div>
           </div>
+          <div className="bg-[#252525] rounded-xl p-4">
+            <div className="text-sm text-gray-400 mb-1">Total Cards</div>
+            <div className="text-2xl font-medium">{masteryStats.totalCards}</div>
+          </div>
+          <div className="bg-[#252525] rounded-xl p-4">
+            <div className="text-sm text-gray-400 mb-1">Mastered</div>
+            <div className="text-2xl font-medium">{masteryStats.masteredCards}</div>
+          </div>
+          <div className="bg-[#252525] rounded-xl p-4">
+            <div className="text-sm text-gray-400 mb-1">Learning</div>
+            <div className="text-2xl font-medium">{masteryStats.learningCards}</div>
+          </div>
+        </div>
+        <div className="bg-[#252525] rounded-xl p-4">
+          <div className="text-sm text-gray-400 mb-1">Average Mastery</div>
+          <div className="text-2xl font-medium">{masteryStats.averageMastery.toFixed(1)}%</div>
         </div>
       </div>
 
       {/* Recent Sets */}
-      <section className="px-4 py-3">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center">
-            <Clock className="h-5 w-5 text-[#F5B700] mr-2" />
-            <h2 className="text-lg font-medium">Recently Viewed</h2>
-          </div>
-          <Link to="/collection" className="text-sm text-[#F5B700]">
-            View all
+      <div className="px-4 py-2">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-medium">Recent Sets</h2>
+          <Link to="/collection">
+            <Button variant="ghost" className="text-[#F5B700] hover:text-[#E5A700]">
+              View All
+            </Button>
           </Link>
         </div>
-        <div className="space-y-3">
-          {recentSets.map((set) => (
-            <Link to={`/deck/${set.id}`} key={set.id}>
-              <div className="bg-[#252525] rounded-xl p-4 mb-3 border-l-4 border-[#F5B700]">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-medium">{set.title}</h3>
-                    <p className="text-sm text-gray-400">
-                      {set.terms} terms • by {set.author}
-                    </p>
-                  </div>
-                  <div className="bg-[#333333] rounded-full px-3 py-1 text-xs">
-                    <BookOpen className="h-4 w-4 inline-block mr-1 text-[#F5B700]" />
-                    Study
+        {loading ? (
+          <div className="text-gray-400">Loading...</div>
+        ) : decks.length === 0 ? (
+          <div className="text-center py-8">
+            <div className="text-gray-400 mb-4">No decks found.</div>
+            <Link to="/create-deck">
+              <Button className="bg-[#F5B700] text-black hover:bg-[#E5A700]">
+                Create Your First Deck
+              </Button>
+            </Link>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {decks.slice(0, 3).map((deck) => (
+              <Link to={`/deck/${deck.id}`} key={deck.id}>
+                <div className="bg-[#252525] rounded-xl p-4">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h3 className="font-medium">{deck.title}</h3>
+                      <div className="flex items-center mt-1">
+                        <Badge variant="outline" className="bg-[#333333] text-white border-none mr-2">
+                          {deck.cards?.length || 0} terms
+                        </Badge>
+                      </div>
+                    </div>
+                    <div className="bg-[#333333] p-2 rounded-lg">
+                      <BookOpen className="h-5 w-5 text-[#F5B700]" />
+                    </div>
                   </div>
                 </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Recent Folders */}
+      <div className="px-4 py-2">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-medium">Recent Folders</h2>
+          <Link to="/collection">
+            <Button variant="ghost" className="text-[#F5B700] hover:text-[#E5A700]">
+              View All
+            </Button>
+          </Link>
         </div>
-      </section>
+        {loading ? (
+          <div className="text-gray-400">Loading...</div>
+        ) : folders.length === 0 ? (
+          <div className="text-center py-8">
+            <div className="text-gray-400 mb-4">No folders found.</div>
+            <Link to="/create-folder">
+              <Button className="bg-[#F5B700] text-black hover:bg-[#E5A700]">
+                Create Your First Folder
+              </Button>
+            </Link>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {folders.slice(0, 3).map((folder) => (
+              <Link to={`/edit-folder/${folder.id}`} key={folder.id}>
+                <div className="bg-[#252525] rounded-xl p-4">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h3 className="font-medium">{folder.name}</h3>
+                      <div className="flex items-center mt-1">
+                        <Badge variant="outline" className="bg-[#333333] text-white border-none mr-2">
+                          {folder.deckIds.length} decks
+                        </Badge>
+                        {folder.description && (
+                          <span className="text-sm text-gray-400">{folder.description}</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="bg-[#333333] p-2 rounded-lg">
+                      <FolderOpen className="h-5 w-5 text-[#F5B700]" />
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Recommended Sets */}
       <section className="px-4 py-3">

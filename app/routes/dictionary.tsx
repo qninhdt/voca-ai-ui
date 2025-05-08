@@ -5,14 +5,20 @@ import { Search, X } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { useNavigate } from "react-router"
-import ProfileDrawer from "@/components/profile-drawer"
-import { dictionaryData } from "@/data/dictionary-data"
+
+// Load words.txt for auto-matching
+const wordsList: string[] = [];
+fetch('/words.txt')
+  .then(res => res.text())
+  .then(text => {
+    wordsList.push(...text.split('\n').map(w => w.trim()).filter(Boolean));
+  });
 
 export default function DictionaryPage() {
   const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState("")
   const [showDropdown, setShowDropdown] = useState(false)
-  const [filteredWords, setFilteredWords] = useState<any[]>([])
+  const [filteredWords, setFilteredWords] = useState<string[]>([])
   const searchRef = useRef<HTMLDivElement>(null)
 
   // Word of the day
@@ -31,9 +37,9 @@ export default function DictionaryPage() {
   ]
 
   useEffect(() => {
-    // Filter words based on search query
+    // Filter words based on search query using wordsList
     if (searchQuery.length > 0) {
-      const filtered = dictionaryData.filter((word) => word.word.toLowerCase().includes(searchQuery.toLowerCase()))
+      const filtered = wordsList.filter((word) => word.toLowerCase().startsWith(searchQuery.toLowerCase())).slice(0, 20)
       setFilteredWords(filtered)
       setShowDropdown(filtered.length > 0)
     } else {
@@ -60,8 +66,8 @@ export default function DictionaryPage() {
     setSearchQuery(query)
   }
 
-  const selectWord = (word: any) => {
-    navigate(`/dictionary/${word.word.toLowerCase()}`)
+  const selectWord = (word: string) => {
+    navigate(`/dictionary/${word.toLowerCase()}`)
   }
 
   return (
@@ -69,7 +75,6 @@ export default function DictionaryPage() {
       {/* Header */}
       <header className="flex items-center justify-between p-4 bg-[#252525] border-b border-[#333333]">
         <div className="text-2xl font-bold text-[#F5B700]">VocaAI Dictionary</div>
-        <ProfileDrawer username="qninh" email="qndt123@gmail.com" />
       </header>
 
       {/* Search Bar */}
@@ -101,18 +106,12 @@ export default function DictionaryPage() {
             <div className="absolute z-10 mt-1 w-full bg-[#252525] rounded-xl shadow-lg max-h-60 overflow-y-auto">
               {filteredWords.map((word) => (
                 <button
-                  key={word.id}
+                  key={word}
                   className="w-full px-4 py-3 text-left hover:bg-[#333333] flex items-center justify-between border-b border-[#333333] last:border-0"
                   onClick={() => selectWord(word)}
                 >
                   <div>
-                    <div className="font-medium">{word.word}</div>
-                    <div className="text-xs text-gray-400">
-                      {word.partOfSpeech} • {word.phonetic}
-                    </div>
-                  </div>
-                  <div className="text-xs bg-[#333333] px-2 py-1 rounded-full text-gray-300">
-                    {word.definitions[0].definition.substring(0, 20)}...
+                    <div className="font-medium">{word}</div>
                   </div>
                 </button>
               ))}

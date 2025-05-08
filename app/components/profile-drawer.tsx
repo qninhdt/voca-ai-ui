@@ -1,79 +1,84 @@
 "use client"
 
-import { useState } from "react"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Trophy, Settings, CreditCard, Sun, Moon, LogOut } from "lucide-react"
-import { Link } from "react-router"
-import { useTheme } from "@/components/theme-provider"
+import { useEffect, useState } from "react"
+import { useNavigate } from "react-router"
+import { signInWithGoogle, logout, onAuthStateChange } from "../lib/firebase"
+import type { User } from "firebase/auth"
+import { Button } from "./ui/button"
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "./ui/drawer"
+import { Menu } from "lucide-react"
 
-interface ProfileDrawerProps {
-  username: string
-  email: string
-  avatarUrl?: string
-}
+export default function ProfileDrawer() {
+  const navigate = useNavigate()
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
 
-export default function ProfileDrawer({ username, email, avatarUrl }: ProfileDrawerProps) {
-  const [open, setOpen] = useState(false)
-  const { theme, setTheme } = useTheme()
+  useEffect(() => {
+    const unsubscribe = onAuthStateChange((user: User | null) => {
+      setUser(user)
+      setLoading(false)
+    })
 
-  const toggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark")
+    return () => unsubscribe()
+  }, [])
+
+  const handleSignIn = async () => {
+    try {
+      await signInWithGoogle()
+    } catch (error) {
+      console.error("Error signing in:", error)
+    }
+  }
+
+  const handleSignOut = async () => {
+    try {
+      await logout()
+      navigate("/welcome")
+    } catch (error) {
+      console.error("Error signing out:", error)
+    }
   }
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        <button className="focus:outline-none">
-          <Avatar className="h-9 w-9 border-2 border-[#F5B700] cursor-pointer">
-            <AvatarImage src={avatarUrl || "/placeholder.svg?height=36&width=36"} alt={username} />
-            <AvatarFallback className="bg-[#F5B700] text-black">{username.charAt(0).toUpperCase()}</AvatarFallback>
-          </Avatar>
-        </button>
-      </SheetTrigger>
-      <SheetContent side="right" className="w-[300px] sm:w-[350px] bg-[#1A1A1A] border-l border-[#333333] p-0">
-        <div className="flex flex-col h-full">
-          {/* Profile Header */}
-          <div className="bg-[#252525] p-6 flex flex-col items-center border-b border-[#333333]">
-            <Avatar className="h-20 w-20 border-2 border-[#F5B700] mb-4">
-              <AvatarImage src={avatarUrl || "/placeholder.svg?height=80&width=80"} alt={username} />
-              <AvatarFallback className="bg-[#F5B700] text-black text-xl">
-                {username.charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <h3 className="font-bold text-lg">{username}</h3>
-            <p className="text-gray-400 text-sm">{email}</p>
-          </div>
-
-          {/* Menu Items */}
-          <div className="flex-1">
-            <Link
-              to="/achievements"
-              className="flex items-center px-6 py-4 hover:bg-[#252525] border-b border-[#333333]"
-              onClick={() => setOpen(false)}
-            >
-              <Trophy className="h-5 w-5 text-[#F5B700] mr-3" />
-              <span>Achievements</span>
-            </Link>
-
-            <Link
-              to="/profile"
-              className="flex items-center px-6 py-4 hover:bg-[#252525] border-b border-[#333333]"
-              onClick={() => setOpen(false)}
-            >
-              <Settings className="h-5 w-5 text-[#F5B700] mr-3" />
-              <span>Settings</span>
-            </Link>
-
-          </div>
-
-          {/* Log Out */}
-          <button className="flex items-center px-6 py-4 hover:bg-[#252525] text-red-500 border-t border-[#333333]">
-            <LogOut className="h-5 w-5 mr-3" />
-            <span>Log out</span>
-          </button>
+    <Drawer>
+      <DrawerTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-9 w-9">
+          <Menu className="h-5 w-5" />
+        </Button>
+      </DrawerTrigger>
+      <DrawerContent>
+        <DrawerHeader>
+          <DrawerTitle>Profile</DrawerTitle>
+        </DrawerHeader>
+        <div className="p-4">
+          {loading ? (
+            <div className="flex justify-center">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+            </div>
+          ) : user ? (
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <Avatar className="h-12 w-12">
+                  <AvatarImage src={user.photoURL || undefined} alt={user.displayName || "User"} />
+                  <AvatarFallback>{user.displayName?.[0] || "U"}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="font-medium">{user.displayName || "User"}</p>
+                  <p className="text-sm text-muted-foreground">{user.email}</p>
+                </div>
+              </div>
+              <Button variant="outline" className="w-full" onClick={handleSignOut}>
+                Sign Out
+              </Button>
+            </div>
+          ) : (
+            <Button onClick={handleSignIn} className="w-full">
+              Sign in with Google
+            </Button>
+          )}
         </div>
-      </SheetContent>
-    </Sheet>
+      </DrawerContent>
+    </Drawer>
   )
 }

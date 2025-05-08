@@ -2,13 +2,14 @@ import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router"
 import { ChevronLeft, ChevronRight, Star, Volume2, Settings, X, Play, Maximize2, ChevronDown } from "lucide-react"
 import { Switch } from "@/components/ui/switch"
-import { cn } from "@/lib/utils"
+import { cn, speakText } from "@/lib/utils"
+import { getDeck } from "@/lib/firebase"
 
 interface Flashcard {
   id: string
   term: string
   definition: string
-  starred: boolean
+  starred?: boolean
 }
 
 export default function FlashcardLearningPage() {
@@ -20,37 +21,20 @@ export default function FlashcardLearningPage() {
   const [showDefinition, setShowDefinition] = useState(false)
   const [trackProgress, setTrackProgress] = useState(true)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [flashcards, setFlashcards] = useState<Flashcard[]>([])
+  const [loading, setLoading] = useState(true)
 
-  // Mock flashcards data
-  const [flashcards, setFlashcards] = useState<Flashcard[]>([
-    { id: "1", term: "shriek", definition: "a high-pitched piercing cry or sound", starred: false },
-    { id: "2", term: "abate", definition: "to become less intense or widespread", starred: false },
-    { id: "3", term: "benevolent", definition: "well-meaning and kindly", starred: true },
-    { id: "4", term: "cacophony", definition: "a harsh, discordant mixture of sounds", starred: false },
-    { id: "5", term: "dearth", definition: "a scarcity or lack of something", starred: false },
-    { id: "6", term: "ephemeral", definition: "lasting for a very short time", starred: false },
-    {
-      id: "7",
-      term: "fastidious",
-      definition: "very attentive to and concerned about accuracy and detail",
-      starred: false,
-    },
-    { id: "8", term: "garrulous", definition: "excessively talkative, especially on trivial matters", starred: false },
-    { id: "9", term: "harangue", definition: "a lengthy and aggressive speech", starred: false },
-    {
-      id: "10",
-      term: "iconoclast",
-      definition: "a person who attacks or criticizes cherished beliefs or institutions",
-      starred: false,
-    },
-    {
-      id: "11",
-      term: "juxtapose",
-      definition: "to place or deal with close together for contrasting effect",
-      starred: false,
-    },
-    { id: "12", term: "kindle", definition: "to light or set on fire; to arouse or inspire", starred: false },
-  ])
+  useEffect(() => {
+    async function fetchDeck() {
+      setLoading(true)
+      if (deckId) {
+        const deck = await getDeck(deckId)
+        setFlashcards(deck?.cards || [])
+      }
+      setLoading(false)
+    }
+    fetchDeck()
+  }, [deckId])
 
   const toggleStar = () => {
     const updatedFlashcards = [...flashcards]
@@ -103,6 +87,13 @@ export default function FlashcardLearningPage() {
     }
   }, [currentCardIndex, showDefinition])
 
+  if (loading) {
+    return <div className="flex flex-col min-h-full items-center justify-center text-gray-400">Loading...</div>
+  }
+  if (!flashcards.length) {
+    return <div className="flex flex-col min-h-full items-center justify-center text-gray-400">No cards in this deck.</div>
+  }
+
   return (
     <div className="flex flex-col min-h-full bg-[#1A1A1A] text-white">
       {/* Header */}
@@ -139,7 +130,7 @@ export default function FlashcardLearningPage() {
               className="p-2 rounded-full hover:bg-[#333333] transition-colors"
               onClick={(e) => {
                 e.stopPropagation()
-                // Play audio logic would go here
+                speakText(flashcards[currentCardIndex].term)
               }}
             >
               <Volume2 className="h-5 w-5 text-gray-400" />

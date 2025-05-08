@@ -134,7 +134,7 @@ export default function AIChatPage() {
             <div className="text-xs text-gray-400">{selectedAssistant.description}</div>
           </div>
         </div>
-        <ProfileDrawer username="qninh" email="qndt123@gmail.com" />
+        <ProfileDrawer />
       </header>
 
       {/* Messages - Scrollable */}

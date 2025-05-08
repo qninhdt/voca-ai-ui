@@ -12,7 +12,7 @@ export default function BottomNavigation() {
   return (
     <>
       {/* Main Bottom Navigation */}
-      <div className=" bottom-0 left-0 right-0 bg-[#252525] border-t border-[#333333] h-16 z-50">
+      <div className="fixed bottom-0 left-0 right-0 bg-[#252525] border-t border-[#333333] h-16 z-50">
         <div className="flex items-center justify-around h-full">
           <Link
             to="/"
@@ -47,7 +47,7 @@ export default function BottomNavigation() {
                 <h3 className="text-lg font-medium mb-4">Create New</h3>
                 <div className="space-y-4">
                   <Link
-                    to="/create/folder"
+                    to="/create-folder"
                     className="flex items-center gap-3 p-3 bg-[#252525] rounded-xl"
                     onClick={() => setIsCreateOpen(false)}
                   >
@@ -57,7 +57,7 @@ export default function BottomNavigation() {
                     <span>Create a folder</span>
                   </Link>
                   <Link
-                    to="/create/deck"
+                    to="/create-deck"
                     className="flex items-center gap-3 p-3 bg-[#252525] rounded-xl"
                     onClick={() => setIsCreateOpen(false)}
                   >
