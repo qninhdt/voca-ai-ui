@@ -227,7 +227,7 @@ export default function DeckPage() {
             <div className="bg-[#252525] rounded-xl p-4">
               <Line
                 data={{
-                  labels: sessionTracks.map((_, i) => `Session ${i + 1}`),
+                  labels: sessionTracks.map((_, i) => `${i + 1}`),
                   datasets: [
                     {
                       label: 'Avg Mastery',

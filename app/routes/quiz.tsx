@@ -24,6 +24,7 @@ export default function QuizPage() {
   const [loading, setLoading] = useState(true);
   const [sessionFinished, setSessionFinished] = useState(false);
   const [masteryStats, setMasteryStats] = useState<{ mastered: number, average: number } | null>(null);
+  const [showContinue, setShowContinue] = useState(false);
 
   useEffect(() => {
     async function fetchQuestions() {
@@ -65,24 +66,48 @@ export default function QuizPage() {
   const handleAnswerSelect = async (answer: string) => {
     setSelectedAnswer(answer)
     setShowFeedback(true)
-    const correct = answer.trim().toLowerCase() === current.card.term.trim().toLowerCase();
+    
+    // Check if the answer is correct based on question type
+    const correct = current.type === "ai-quiz" 
+      ? answer === current.correctAnswer
+      : answer.trim().toLowerCase() === current.card.term.trim().toLowerCase();
+    
     setIsCorrect(correct)
     if (correct) setScore(score + 1)
     try {
       await updateCardMastery(deckId as string, current.card.id, Math.max(0, (current.card.mastery || 0) + (correct ? 1 : -1)))
     } catch (e) {}
-    setTimeout(() => {
-      if (currentQuestionIndex < questions.length - 1) {
-        setCurrentQuestionIndex(currentQuestionIndex + 1)
-        setSelectedAnswer(null)
-        setIsCorrect(null)
-        setShowFeedback(false)
-        setFillBlankInput("")
-        setAudioPlayed(false)
-      } else {
-        setSessionFinished(true);
-      }
-    }, 1500)
+    
+    if (current.type === "ai-quiz") {
+      setShowContinue(true);
+    } else {
+      setTimeout(() => {
+        if (currentQuestionIndex < questions.length - 1) {
+          setCurrentQuestionIndex(currentQuestionIndex + 1)
+          setSelectedAnswer(null)
+          setIsCorrect(null)
+          setShowFeedback(false)
+          setFillBlankInput("")
+          setAudioPlayed(false)
+        } else {
+          setSessionFinished(true);
+        }
+      }, 1500)
+    }
+  }
+
+  const handleContinue = () => {
+    setShowContinue(false);
+    if (currentQuestionIndex < questions.length - 1) {
+      setCurrentQuestionIndex(currentQuestionIndex + 1)
+      setSelectedAnswer(null)
+      setIsCorrect(null)
+      setShowFeedback(false)
+      setFillBlankInput("")
+      setAudioPlayed(false)
+    } else {
+      setSessionFinished(true);
+    }
   }
 
   const handleDontKnow = async () => {
@@ -92,18 +117,23 @@ export default function QuizPage() {
     try {
       await updateCardMastery(deckId as string, current.card.id, Math.max(0, (current.card.mastery || 0) - 1))
     } catch (e) {}
-    setTimeout(() => {
-      if (currentQuestionIndex < questions.length - 1) {
-        setCurrentQuestionIndex(currentQuestionIndex + 1)
-        setSelectedAnswer(null)
-        setIsCorrect(null)
-        setShowFeedback(false)
-        setFillBlankInput("")
-        setAudioPlayed(false)
-      } else {
-        setSessionFinished(true);
-      }
-    }, 1500)
+    
+    if (current.type === "ai-quiz") {
+      setShowContinue(true);
+    } else {
+      setTimeout(() => {
+        if (currentQuestionIndex < questions.length - 1) {
+          setCurrentQuestionIndex(currentQuestionIndex + 1)
+          setSelectedAnswer(null)
+          setIsCorrect(null)
+          setShowFeedback(false)
+          setFillBlankInput("")
+          setAudioPlayed(false)
+        } else {
+          setSessionFinished(true);
+        }
+      }, 1500)
+    }
   }
 
   const handleRedoSession = async () => {
@@ -115,6 +145,7 @@ export default function QuizPage() {
     setShowFeedback(false);
     setFillBlankInput("");
     setAudioPlayed(false);
+    setShowContinue(false);
     setLoading(true);
     setMasteryStats(null);
     if (deckId) {
@@ -175,8 +206,8 @@ export default function QuizPage() {
       <div className="px-4 py-6">
         <div className="flex items-center mb-2">
             {/* show the label Definition if the question is not listening */}
-            {current.type !== "listening" && (
-          <h2 className="font-bold text-lg">Definition</h2>
+            {current.type !== "listening" && current.type !== "ai-quiz" && (
+              <h2 className="font-bold text-lg">Definition</h2>
             )}
             {current.type === "listening" && (
               <div className="w-full flex flex-col items-center justify-center my-6">
@@ -198,45 +229,66 @@ export default function QuizPage() {
                 </div>
               </div>
             )}
-            {current.type !== "listening" && (
+            {current.type !== "listening" && current.type !== "ai-quiz" && (
               <button className="ml-2 p-1 rounded-full hover:bg-[#252525]" onClick={() => speakText(current.card.term)}>
-            <Volume2 className="h-4 w-4 text-gray-400" />
-          </button>
+                <Volume2 className="h-4 w-4 text-gray-400" />
+              </button>
             )}
         </div>
 
           {/* show the definition if question is multiple choice and fill in the blank */}
-          {current.type !== "listening" && (
+          {current.type !== "listening" && current.type !== "ai-quiz" && (
             <p className="text-lg text-gray-200">{current.card.definition}</p>
           )} 
 
+          {/* show AI question if type is ai-quiz */}
+          {current.type === "ai-quiz" && current.aiQuestion && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-1 text-xs font-medium bg-[#F5B700]/20 text-[#F5B700] rounded-full border border-[#F5B700]/30">
+                  AI Question
+                </span>
+              </div>
+              <p className="text-lg text-gray-200">{current.aiQuestion}</p>
+            </div>
+          )}
+
           {/* show the label Choose matching term if the question is multiple choice */}
-          <h3 className="font-bold mb-4 mt-8">{current.type === "fill-blank" ? "Type your answer" : "Choose matching term"}</h3>
+          <h3 className="font-bold mb-4 mt-8">
+            {current.type === "fill-blank" 
+              ? "Type your answer" 
+              : current.type === "ai-quiz" 
+                ? "Select the correct answer" 
+                : "Choose matching term"}
+          </h3>
 
         <div className="space-y-3">
-            {/* Multiple Choice & Listening */}
-            {(current.type === "multiple-choice" || (current.type === "listening" && audioPlayed)) && current.options && (
+            {/* Multiple Choice, Listening & AI Quiz */}
+            {((current.type === "multiple-choice" || current.type === "ai-quiz") || 
+              (current.type === "listening" && audioPlayed)) && current.options && (
               current.options.map((option) => (
-            <button
-              key={option}
-              className={cn(
+                <button
+                  key={option}
+                  className={cn(
                     "w-full p-4 rounded-xl border text-left transition-colors duration-300",
-                selectedAnswer === option && isCorrect === true
-                  ? "bg-green-500/20 border-green-500"
-                  : selectedAnswer === option && isCorrect === false
-                    ? "bg-red-500/20 border-red-500"
+                    selectedAnswer === option && isCorrect === true
+                      ? "bg-green-500/20 border-green-500"
+                      : selectedAnswer === option && isCorrect === false
+                        ? "bg-red-500/20 border-red-500"
                         : "bg-[#252525] border-[#333333] hover:bg-[#333333]",
-                showFeedback &&
-                      option === current.card.term &&
-                  "bg-green-500/20 border-green-500",
-              )}
-              onClick={() => !showFeedback && handleAnswerSelect(option)}
-              disabled={showFeedback}
-            >
-              {option}
-            </button>
+                    showFeedback &&
+                      ((current.type === "ai-quiz" && option === current.correctAnswer) ||
+                       (current.type !== "ai-quiz" && option === current.card.term)) &&
+                      "bg-green-500/20 border-green-500",
+                  )}
+                  onClick={() => !showFeedback && handleAnswerSelect(option)}
+                  disabled={showFeedback}
+                >
+                  {option}
+                </button>
               ))
             )}
+
             {/* Fill in the Blank */}
             {current.type === "fill-blank" && (
               <form
@@ -274,6 +326,25 @@ export default function QuizPage() {
                   </div>
                 )}
               </form>
+            )}
+
+            {/* AI Quiz Explanation */}
+            {current.type === "ai-quiz" && showFeedback && current.aiExplanation && (
+              <><div className="mt-4 p-4 bg-[#252525] rounded-xl border border-[#333333]">
+                <p className="text-gray-200">{current.aiExplanation}</p>
+              </div>
+              
+              {showContinue && (
+                <div className="mt-4 flex justify-end">
+                  <Button 
+                    onClick={handleContinue}
+                    className="bg-[#F5B700] text-black hover:bg-[#E5A700]"
+                  >
+                    Continue
+                  </Button>
+                </div>
+              )}
+              </>
             )}
           </div>
       </div>

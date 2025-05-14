@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Search, Filter, BookOpen, FolderOpen, Beaker, GraduationCap } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -54,26 +54,8 @@ export default function CollectionPage() {
           getUserFolders(user.uid)
         ])
         
-        // Sort decks by updatedAt desc, fallback to createdAt
-        const sortedDecks = userDecks
-          .slice()
-          .sort((a: Deck, b: Deck) => {
-            const aTime = a.updatedAt?.seconds || a.createdAt?.seconds || 0
-            const bTime = b.updatedAt?.seconds || b.createdAt?.seconds || 0
-            return bTime - aTime
-          })
-        
-        // Sort folders by updatedAt desc, fallback to createdAt
-        const sortedFolders = userFolders
-          .slice()
-          .sort((a: Folder, b: Folder) => {
-            const aTime = a.updatedAt?.seconds || a.createdAt?.seconds || 0
-            const bTime = b.updatedAt?.seconds || b.createdAt?.seconds || 0
-            return bTime - aTime
-          })
-
-        setDecks(sortedDecks)
-        setFolders(sortedFolders)
+        setDecks(userDecks)
+        setFolders(userFolders)
         setLoading(false)
       } else {
         setDecks([])
@@ -85,17 +67,53 @@ export default function CollectionPage() {
     return () => unsubscribe()
   }, [])
 
+  // Sort and filter decks based on selected option
+  const sortedAndFilteredDecks = useMemo(() => {
+    let filteredDecks = [...decks];
+
+    // Apply search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filteredDecks = filteredDecks.filter(deck => 
+        deck.title?.toLowerCase().includes(query) || 
+        deck.description?.toLowerCase().includes(query)
+      );
+    }
+
+    // Apply sorting
+    switch (filterOption) {
+      case "Recent":
+        return filteredDecks.sort((a, b) => {
+          const aTime = a.updatedAt?.seconds || a.createdAt?.seconds || 0;
+          const bTime = b.updatedAt?.seconds || b.createdAt?.seconds || 0;
+          return bTime - aTime;
+        });
+      
+      case "Alphabetical":
+        return filteredDecks.sort((a, b) => {
+          const aTitle = a.title?.toLowerCase() || '';
+          const bTitle = b.title?.toLowerCase() || '';
+          return aTitle.localeCompare(bTitle);
+        });
+      
+      default:
+        return filteredDecks;
+    }
+  }, [decks, filterOption, searchQuery]);
+
   // Group decks by time period
-  const now = new Date()
-  const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-  const lastWeekDecks = decks.filter(deck => {
-    const deckTime = new Date((deck.updatedAt?.seconds || deck.createdAt?.seconds || 0) * 1000)
-    return deckTime >= lastWeek
-  })
-  const olderDecks = decks.filter(deck => {
-    const deckTime = new Date((deck.updatedAt?.seconds || deck.createdAt?.seconds || 0) * 1000)
-    return deckTime < lastWeek
-  })
+  const now = new Date();
+  const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  
+  const lastWeekDecks = sortedAndFilteredDecks.filter(deck => {
+    const deckTime = new Date((deck.updatedAt?.seconds || deck.createdAt?.seconds || 0) * 1000);
+    return deckTime >= lastWeek;
+  });
+
+  const olderDecks = sortedAndFilteredDecks.filter(deck => {
+    const deckTime = new Date((deck.updatedAt?.seconds || deck.createdAt?.seconds || 0) * 1000);
+    return deckTime < lastWeek;
+  });
 
   return (
     <div className="flex flex-col min-h-full bg-[#1A1A1A] text-white pb-16">
@@ -143,7 +161,6 @@ export default function CollectionPage() {
               <DropdownMenuContent className="bg-[#252525] text-white border-[#333333]">
                 <DropdownMenuItem onClick={() => setFilterOption("Recent")}>Recent</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setFilterOption("Alphabetical")}>Alphabetical</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setFilterOption("Created by me")}>Created by me</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
@@ -161,9 +178,11 @@ export default function CollectionPage() {
 
           {loading ? (
             <div className="text-gray-400">Loading...</div>
-          ) : decks.length === 0 ? (
+          ) : sortedAndFilteredDecks.length === 0 ? (
             <div className="text-center py-8">
-              <div className="text-gray-400 mb-4">No decks found.</div>
+              <div className="text-gray-400 mb-4">
+                {searchQuery ? "No decks match your search." : "No decks found."}
+              </div>
               <Link to="/create-deck">
                 <Button className="bg-[#F5B700] text-black hover:bg-[#E5A700]">
                   Create Your First Deck
@@ -186,6 +205,9 @@ export default function CollectionPage() {
                               <Badge variant="outline" className="bg-[#333333] text-white border-none mr-2">
                                 {deck.cards?.length || 0} terms
                               </Badge>
+                              {deck.description && (
+                                <span className="text-sm text-gray-400">{deck.description}</span>
+                              )}
                             </div>
                           </div>
                           <div className="bg-[#333333] p-2 rounded-lg">
@@ -212,6 +234,9 @@ export default function CollectionPage() {
                               <Badge variant="outline" className="bg-[#333333] text-white border-none mr-2">
                                 {deck.cards?.length || 0} terms
                               </Badge>
+                              {deck.description && (
+                                <span className="text-sm text-gray-400">{deck.description}</span>
+                              )}
                             </div>
                           </div>
                           <div className="bg-[#333333] p-2 rounded-lg">

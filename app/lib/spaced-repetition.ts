@@ -1,16 +1,29 @@
 import { getDeck } from "./firebase";
 import type { Card } from "./firebase";
+import { generateAIQuiz } from "./chatbot";
 
-export type QuestionType = "multiple-choice" | "fill-blank" | "listening";
+export type QuestionType =
+  | "multiple-choice"
+  | "fill-blank"
+  | "listening"
+  | "ai-quiz";
 
 export interface Question {
   card: Card;
   type: QuestionType;
   options: string[];
+  aiQuestion?: string;
+  aiExplanation?: string;
+  correctAnswer?: string;
 }
 
 function getRandomQuestionType(): QuestionType {
-  const types: QuestionType[] = ["multiple-choice", "fill-blank", "listening"];
+  const types: QuestionType[] = [
+    "multiple-choice",
+    "fill-blank",
+    "listening",
+    "ai-quiz",
+  ];
   return types[Math.floor(Math.random() * types.length)];
 }
 
@@ -69,12 +82,35 @@ export async function generateSessionQuestions(
   }
 
   // Generate questions
-  return sessionCards.map((card) => {
-    const type = getRandomQuestionType();
-    let options: string[] = [];
-    if (type === "multiple-choice" || type === "listening") {
-      options = getMCQOptions(cards, card);
-    }
-    return { card, type, options };
-  });
+  const questions = await Promise.all(
+    sessionCards.map(async (card) => {
+      const type = getRandomQuestionType();
+      let options: string[] = [];
+      let aiQuestion: string | undefined;
+      let aiExplanation: string | undefined;
+      let correctAnswer: string | undefined;
+
+      if (type === "multiple-choice" || type === "listening") {
+        options = getMCQOptions(cards, card);
+        correctAnswer = card.term;
+      } else if (type === "ai-quiz") {
+        try {
+          const aiQuiz = await generateAIQuiz(card.term);
+          options = aiQuiz.options;
+          aiQuestion = aiQuiz.question;
+          aiExplanation = aiQuiz.explanation;
+          correctAnswer = aiQuiz.correctAnswer;
+        } catch (error) {
+          // Fallback to multiple choice if AI quiz generation fails
+          console.error("Error generating AI quiz:", error);
+          options = getMCQOptions(cards, card);
+          correctAnswer = card.term;
+        }
+      }
+
+      return { card, type, options, aiQuestion, aiExplanation, correctAnswer };
+    })
+  );
+
+  return questions;
 }

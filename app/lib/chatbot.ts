@@ -21,87 +21,44 @@ export const VOCA_AI_SYSTEM_PROMPT = `You are VocaAI, an intelligent vocabulary 
 
 Always maintain a friendly, educational tone and focus on making vocabulary learning engaging and effective.`;
 
-export interface QuizQuestion {
-  question: string;
-  options: string[];
-  correctAnswer: number;
-  explanation: string;
-}
-
-export interface Quiz {
-  word: string;
-  questions: QuizQuestion[];
-  difficulty: "easy" | "medium" | "hard";
-}
-
-export async function generateAIQuiz(word: string): Promise<Quiz> {
-  const prompt = `Create a vocabulary quiz for the word "${word}". The quiz should include:
-1. A multiple-choice question testing understanding of the word's meaning
-2. A question about the word's usage in context
-3. A question about related words (synonyms/antonyms)
-
-Format the response as a JSON object with the following structure:
-{
-  "word": "${word}",
-  "difficulty": "medium",
-  "questions": [
-    {
-      "question": "What is the meaning of ${word}?",
-      "options": ["option1", "option2", "option3", "option4"],
-      "correctAnswer": 0,
-      "explanation": "Explanation of why this is the correct answer"
-    }
-  ]
-}
-
-Make sure the questions are challenging but fair, and the explanations are educational.`;
-
+export async function generateAIQuiz(word: string) {
   try {
     const response = await client.chat.completions.create({
       model: "gpt-4.1-mini",
       messages: [
         {
           role: "system",
-          content: VOCA_AI_SYSTEM_PROMPT,
+          content: `You are a vocabulary quiz generator. Create an engaging question to test understanding of the word "${word}". 
+          The response should be in JSON format with the following structure:
+          {
+            "question": "The question text",
+            "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
+            "correctAnswer": "The correct option",
+            "explanation": "A brief explanation of why this is the correct answer"
+          }
+          
+          Guidelines:
+          - Make the question challenging but fair
+          - Include 4 options, with only one correct answer
+          - The explanation should be educational and help reinforce learning
+          - Keep the question and options concise
+          - Make sure the correct answer is one of the provided options`,
         },
         {
           role: "user",
-          content: prompt,
+          content: `Generate a quiz question for the word "${word}"`,
         },
       ],
       temperature: 0.7,
-      max_tokens: 1000,
+      max_tokens: 500,
     });
 
-    const content = response.choices[0].message.content;
-    if (!content) {
-      throw new Error("No response from AI");
-    }
+    const content = response.choices[0]?.message?.content;
+    if (!content) throw new Error("No response from AI");
 
-    // Parse the JSON response
-    const quiz = JSON.parse(content) as Quiz;
-
-    // Validate the quiz structure
-    if (!quiz.word || !quiz.questions || !Array.isArray(quiz.questions)) {
-      throw new Error("Invalid quiz format");
-    }
-
-    // Validate each question
-    quiz.questions.forEach((q, index) => {
-      if (
-        !q.question ||
-        !q.options ||
-        !Array.isArray(q.options) ||
-        typeof q.correctAnswer !== "number" ||
-        !q.explanation
-      ) {
-        throw new Error(`Invalid question format at index ${index}`);
-      }
-    });
-
-    return quiz;
+    return JSON.parse(content);
   } catch (error) {
-    console.error("Error generating quiz:", error);
-    throw new Error("Failed to generate quiz. Please try again.");
+    console.error("Error generating AI quiz:", error);
+    throw error;
   }
 }
