@@ -31,6 +31,17 @@ export default function AIChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    // Add initial welcome message
+    const welcomeMessage: Message = {
+      id: Date.now().toString(),
+      content: "👋 Hi! I'm VocaAI, your vocabulary learning assistant. I can help you:\n\n- Explain word meanings and usage\n- Provide example sentences\n- Break down complex words\n- Answer questions about language learning\n\nWhat would you like to learn about?",
+      sender: "ai",
+      timestamp: new Date(),
+    }
+    setMessages([welcomeMessage])
+  }, [])
+
+  useEffect(() => {
     const loadRecentWords = async () => {
       try {
         const user = auth.currentUser

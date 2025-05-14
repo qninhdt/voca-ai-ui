@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { ArrowLeft, Plus } from "lucide-react"
+import { ArrowLeft, Plus, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -58,6 +58,10 @@ export default function DeckEditor({ deckId, onSave }: DeckEditorProps) {
 
   const handleChangeDefinition = (id: string, value: string) => {
     setCards(cards.map(card => card.id === id ? { ...card, definition: value } : card))
+  }
+
+  const handleRemoveCard = (id: string) => {
+    setCards(cards.filter(card => card.id !== id))
   }
 
   const handleSave = async () => {
@@ -149,14 +153,22 @@ export default function DeckEditor({ deckId, onSave }: DeckEditorProps) {
         <div className="space-y-4">
           {cards.map((card) => (
             <div key={card.id} className="bg-[#252525] rounded-xl p-4 space-y-4">
-              <div>
+              <div className="flex justify-between items-start gap-2">
                 <Input
                   type="text"
                   placeholder="Term"
                   value={card.term}
                   onChange={(e) => handleChangeTerm(card.id, e.target.value)}
-                  className="bg-[#333333] border-none"
+                  className="bg-[#333333] border-none flex-1"
                 />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 text-gray-400 hover:text-red-400"
+                  onClick={() => handleRemoveCard(card.id)}
+                >
+                  <X className="h-5 w-5" />
+                </Button>
               </div>
               <div>
                 <Textarea

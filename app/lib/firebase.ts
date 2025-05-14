@@ -227,6 +227,9 @@ export async function updateCardMastery(
     now.getTime() + nextReviewDays * 24 * 60 * 60 * 1000
   );
 
+  // Make sure mastery is between 0 and 5
+  mastery = Math.max(0, Math.min(mastery, 5));
+
   // Update the card
   cards[cardIndex] = {
     ...cards[cardIndex],

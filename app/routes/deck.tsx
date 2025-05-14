@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { Star, Volume2, Edit, MoreHorizontal, ArrowLeft, Bookmark, Share2 } from "lucide-react"
+import { Star, Volume2, Edit, MoreHorizontal, ArrowLeft, Bookmark, Share2, LibraryBig, Layers } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { useParams, useNavigate } from "react-router"
@@ -123,8 +123,8 @@ export default function DeckPage() {
   }
 
   const studyModes = [
-    { id: "flashcards", name: "Flashcards", icon: "🃏", color: "bg-[#333333]", textColor: "text-[#F5B700]" },
-    { id: "learn", name: "Learn", icon: "🔄", color: "bg-[#333333]", textColor: "text-[#F5B700]" },
+    { id: "flashcards", name: "Flashcards", icon: <Layers className="h-6 w-6" />, color: "bg-[#333333]", textColor: "text-[#F5B700]" },
+    { id: "learn", name: "Learn", icon: <LibraryBig className="h-6 w-6" />, color: "bg-[#333333]", textColor: "text-[#F5B700]" },
     // { id: "test", name: "Test", icon: "📝", color: "bg-[#333333]", textColor: "text-[#F5B700]" },
     // { id: "blocks", name: "Blocks", icon: "🧩", color: "bg-[#333333]", textColor: "text-[#F5B700]", isNew: true },
     // { id: "blast", name: "Blast", icon: "🚀", color: "bg-[#333333]", textColor: "text-[#F5B700]" },
@@ -300,7 +300,7 @@ export default function DeckPage() {
               onClick={() => handleModeSelect(mode.id)}
             >
               <div className={`w-10 h-10 rounded-full ${mode.color} flex items-center justify-center mb-2`}>
-                <span className={`text-xl ${mode.textColor}`}>{mode.icon}</span>
+                {mode.icon}
               </div>
               <div className="flex items-center">
                 <span>{mode.name}</span>
@@ -311,7 +311,7 @@ export default function DeckPage() {
         </div>
 
         {/* Flashcards List */}
-        <div className="px-4 py-4 mt-3">
+        <div className="px-4 py-4 mt-3 mb-12">
           <div className="flex justify-between items-center mb-4">
             <h2 className="font-bold">Terms ({deck.cards?.length || 0})</h2>
             <Button

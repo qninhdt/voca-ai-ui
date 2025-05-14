@@ -60,7 +60,7 @@ export default function ProfileDrawer() {
             <div className="space-y-4">
               <div className="flex items-center gap-4">
                 <Avatar className="h-12 w-12">
-                  <AvatarImage src={user.photoURL || undefined} alt={user.displayName || "User"} />
+                  <AvatarImage src="user.png" alt={user.displayName || "User"} />
                   <AvatarFallback>{user.displayName?.[0] || "U"}</AvatarFallback>
                 </Avatar>
                 <div>
