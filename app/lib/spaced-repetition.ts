@@ -2,6 +2,8 @@ import { getDeck } from "./firebase";
 import type { Card } from "./firebase";
 import { generateAIQuiz } from "./chatbot";
 
+export const N_QUESTIONS_PER_SESSION = 5;
+
 export type QuestionType =
   | "multiple-choice"
   | "fill-blank"
@@ -64,27 +66,54 @@ export async function generateSessionQuestions(
   const deck = await getDeck(deckId);
   if (!deck || !deck.cards) return [];
   const cards = deck.cards.slice();
+
   // Use nextReview as a priority (lower/older first), but not a filter
   cards.sort(
     (a, b) => (a.nextReview?.seconds || 0) - (b.nextReview?.seconds || 0)
   );
-  // Shuffle to add randomness, but keep nextReview as a priority
-  const prioritized = shuffle(cards.slice(0, 20)); // Take more than needed to avoid dups
-  const sessionCards = avoidNearDuplicates(prioritized, 10);
 
-  // If not enough, fill with more cards
-  if (sessionCards.length < 10) {
-    const extra = shuffle(cards.filter((c) => !sessionCards.includes(c)));
-    for (const card of extra) {
-      if (sessionCards.length >= 10) break;
-      sessionCards.push(card);
-    }
+  // Get all available cards
+  const availableCards = cards.slice(0, N_QUESTIONS_PER_SESSION);
+
+  // If we have fewer cards than questions, we'll need to reuse some
+  const selectedCards: Card[] = [];
+  for (let i = 0; i < N_QUESTIONS_PER_SESSION; i++) {
+    selectedCards.push(availableCards[i % availableCards.length]);
   }
+
+  // Define the base question types
+  const baseTypes: QuestionType[] = [
+    "multiple-choice",
+    "fill-blank",
+    "listening",
+    "ai-quiz",
+  ];
+
+  // Calculate how many times each type should appear
+  const typesCount = Math.ceil(N_QUESTIONS_PER_SESSION / baseTypes.length);
+  const remainingTypes = N_QUESTIONS_PER_SESSION % baseTypes.length;
+
+  // Create array of question types with uniform distribution
+  const questionTypes: QuestionType[] = [];
+  baseTypes.forEach((type) => {
+    // Add the base count for each type
+    for (let i = 0; i < typesCount - 1; i++) {
+      questionTypes.push(type);
+    }
+  });
+
+  // Add remaining types to reach N_QUESTIONS_PER_SESSION
+  for (let i = 0; i < remainingTypes; i++) {
+    questionTypes.push(baseTypes[i]);
+  }
+
+  // Shuffle the question types to randomize their order
+  const shuffledTypes = shuffle(questionTypes);
 
   // Generate questions
   const questions = await Promise.all(
-    sessionCards.map(async (card) => {
-      const type = getRandomQuestionType();
+    selectedCards.map(async (card, index) => {
+      const type = shuffledTypes[index];
       let options: string[] = [];
       let aiQuestion: string | undefined;
       let aiExplanation: string | undefined;
@@ -92,6 +121,9 @@ export async function generateSessionQuestions(
 
       if (type === "multiple-choice" || type === "listening") {
         options = getMCQOptions(cards, card);
+        correctAnswer = card.term;
+      } else if (type === "fill-blank") {
+        options = [card.term]; // For fill-blank, we only need the correct term
         correctAnswer = card.term;
       } else if (type === "ai-quiz") {
         try {
@@ -112,5 +144,6 @@ export async function generateSessionQuestions(
     })
   );
 
-  return questions;
+  // Shuffle the questions to randomize their order
+  return shuffle(questions);
 }

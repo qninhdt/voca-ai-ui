@@ -1,6 +1,6 @@
 "use client"
 
-import { Home, BookOpen, Plus, MessageSquare, User, Search } from "lucide-react"
+import { Home, BookOpen, Plus, MessageSquare, User, Search, Book } from "lucide-react"
 import { Link, useLocation } from "react-router"
 import { useState } from "react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
@@ -52,6 +52,16 @@ export default function BottomNavigation() {
                 <div className="w-12 h-1 bg-[#333333] rounded-full mx-auto mb-6"></div>
                 <h3 className="text-lg font-medium mb-4">Create New</h3>
                 <div className="space-y-4">
+                      <Link
+                    to="/create-deck"
+                    className="flex items-center gap-3 p-3 bg-[#252525] rounded-xl"
+                    onClick={() => setIsCreateOpen(false)}
+                  >
+                    <div className="bg-[#333333] p-2 rounded-lg">
+                      <Book className="h-5 w-5 text-[#F5B700]" />
+                    </div>
+                    <span>Create a deck</span>
+                  </Link>
                   <Link
                     to="/create-folder"
                     className="flex items-center gap-3 p-3 bg-[#252525] rounded-xl"
@@ -62,16 +72,7 @@ export default function BottomNavigation() {
                     </div>
                     <span>Create a folder</span>
                   </Link>
-                  <Link
-                    to="/create-deck"
-                    className="flex items-center gap-3 p-3 bg-[#252525] rounded-xl"
-                    onClick={() => setIsCreateOpen(false)}
-                  >
-                    <div className="bg-[#333333] p-2 rounded-lg">
-                      <span className="text-[#F5B700] text-xl">🃏</span>
-                    </div>
-                    <span>Create a deck</span>
-                  </Link>
+              
                 </div>
               </div>
             </SheetContent>

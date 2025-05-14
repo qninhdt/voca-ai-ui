@@ -172,7 +172,7 @@ export default function AIChatPage() {
           <div key={msg.id} className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"} mb-4`}>
             {msg.sender === "ai" && (
               <Avatar className="h-8 w-8 mr-2 mt-1 flex-shrink-0">
-                <AvatarImage src="/placeholder.svg" alt="VocaAI" />
+                <AvatarImage src="/bot.png" alt="VocaAI" />
                 <AvatarFallback className="bg-[#F5B700] text-black">V</AvatarFallback>
               </Avatar>
             )}
@@ -233,7 +233,7 @@ export default function AIChatPage() {
             </div>
             {msg.sender === "user" && (
               <Avatar className="h-8 w-8 ml-2 mt-1 flex-shrink-0">
-                <AvatarImage src="/placeholder.svg?height=32&width=32" alt="User" />
+                <AvatarImage src="/user.png?height=32&width=32" alt="User" />
                 <AvatarFallback className="bg-[#333333]">U</AvatarFallback>
               </Avatar>
             )}
@@ -244,7 +244,7 @@ export default function AIChatPage() {
         {isLoading && (
           <div className="flex justify-start mb-4">
             <Avatar className="h-8 w-8 mr-2 mt-1 flex-shrink-0">
-              <AvatarImage src="/placeholder.svg" alt="VocaAI" />
+              <AvatarImage src="/bot.png" alt="VocaAI" />
               <AvatarFallback className="bg-[#F5B700] text-black">V</AvatarFallback>
             </Avatar>
             <div className="bg-[#252525] text-white rounded-2xl rounded-bl-none p-3">

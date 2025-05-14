@@ -156,10 +156,7 @@ export default function DeckPage() {
       <div className="flex flex-col">
         {/* Folder and Title */}
         <div className="px-4 py-4">
-          <div className="flex items-center gap-1 text-sm text-gray-400">
-            <span className="mr-1">📁</span>
-            {deck.folder || "No folder"}
-          </div>
+
           <h1 className="text-2xl font-bold mt-1">{deck.title}</h1>
         </div>
 
@@ -221,17 +218,17 @@ export default function DeckPage() {
           </div>
         </div>
 
-        {sessionTracks.length > 1 && (
+        { (
           <div className="px-4 py-3">
             <h3 className="text-lg font-bold mb-2 text-[#F5B700]">Progress Over Time</h3>
             <div className="bg-[#252525] rounded-xl p-4">
               <Line
                 data={{
-                  labels: sessionTracks.map((_, i) => `${i + 1}`),
+                  labels: sessionTracks.slice(-10).map((_, i) => `${i + 1}`),
                   datasets: [
                     {
                       label: 'Avg Mastery',
-                      data: sessionTracks.map(t => t.avgMastery),
+                      data: sessionTracks.slice(-10).map(t => t.avgMastery),
                       borderColor: '#F5B700',
                       backgroundColor: 'rgba(245,183,0,0.2)',
                       tension: 0.3,
@@ -239,7 +236,7 @@ export default function DeckPage() {
                     },
                     {
                       label: 'Mastered Words',
-                      data: sessionTracks.map(t => t.masteredCount),
+                      data: sessionTracks.slice(-10).map(t => t.masteredCount),
                       borderColor: '#00FF99',
                       backgroundColor: 'rgba(0,255,153,0.2)',
                       tension: 0.3,
@@ -282,8 +279,8 @@ export default function DeckPage() {
                       position: 'right',
                       title: { display: true, text: 'Mastered Words', color: '#00FF99' },
                       min: 0,
-                      max: Math.max(...sessionTracks.map(t => t.masteredCount), 5),
-                      ticks: { color: '#00FF99', stepSize: 1 },
+                      max: deck.cards?.length || 5,
+                      ticks: { color: '#00FF99', stepSize: Math.ceil((deck.cards?.length || 5) / 5) },
                       grid: { drawOnChartArea: false },
                     },
                   },

@@ -32,22 +32,22 @@ export default function ProfilePage() {
   ]
 
   const avatars = [
-    { id: "1", url: "/placeholder.svg?height=40&width=40", color: "bg-blue-500" },
-    { id: "2", url: "/placeholder.svg?height=40&width=40", color: "bg-green-500" },
-    { id: "3", url: "/placeholder.svg?height=40&width=40", color: "bg-yellow-500" },
-    { id: "4", url: "/placeholder.svg?height=40&width=40", color: "bg-red-500" },
-    { id: "5", url: "/placeholder.svg?height=40&width=40", color: "bg-purple-500" },
-    { id: "6", url: "/placeholder.svg?height=40&width=40", color: "bg-pink-500" },
-    { id: "7", url: "/placeholder.svg?height=40&width=40", color: "bg-indigo-500" },
-    { id: "8", url: "/placeholder.svg?height=40&width=40", color: "bg-gray-500" },
-    { id: "9", url: "/placeholder.svg?height=40&width=40", color: "bg-orange-500" },
-    { id: "10", url: "/placeholder.svg?height=40&width=40", color: "bg-teal-500" },
-    { id: "11", url: "/placeholder.svg?height=40&width=40", color: "bg-cyan-500" },
-    { id: "12", url: "/placeholder.svg?height=40&width=40", color: "bg-lime-500" },
-    { id: "13", url: "/placeholder.svg?height=40&width=40", color: "bg-emerald-500" },
-    { id: "14", url: "/placeholder.svg?height=40&width=40", color: "bg-violet-500" },
-    { id: "15", url: "/placeholder.svg?height=40&width=40", color: "bg-fuchsia-500" },
-    { id: "16", url: "/placeholder.svg?height=40&width=40", color: "bg-amber-500" },
+    { id: "1", url: "/user.png?height=40&width=40", color: "bg-blue-500" },
+    { id: "2", url: "/user.png?height=40&width=40", color: "bg-green-500" },
+    { id: "3", url: "/user.png?height=40&width=40", color: "bg-yellow-500" },
+    { id: "4", url: "/user.png?height=40&width=40", color: "bg-red-500" },
+    { id: "5", url: "/user.png?height=40&width=40", color: "bg-purple-500" },
+    { id: "6", url: "/user.png?height=40&width=40", color: "bg-pink-500" },
+    { id: "7", url: "/user.png?height=40&width=40", color: "bg-indigo-500" },
+    { id: "8", url: "/user.png?height=40&width=40", color: "bg-gray-500" },
+    { id: "9", url: "/user.png?height=40&width=40", color: "bg-orange-500" },
+    { id: "10", url: "/user.png?height=40&width=40", color: "bg-teal-500" },
+    { id: "11", url: "/user.png?height=40&width=40", color: "bg-cyan-500" },
+    { id: "12", url: "/user.png?height=40&width=40", color: "bg-lime-500" },
+    { id: "13", url: "/user.png?height=40&width=40", color: "bg-emerald-500" },
+    { id: "14", url: "/user.png?height=40&width=40", color: "bg-violet-500" },
+    { id: "15", url: "/user.png?height=40&width=40", color: "bg-fuchsia-500" },
+    { id: "16", url: "/user.png?height=40&width=40", color: "bg-amber-500" },
   ]
 
   useEffect(() => {

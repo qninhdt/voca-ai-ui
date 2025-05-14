@@ -177,7 +177,7 @@ export default function HomePage() {
           <div className="space-y-3">
             {decks.slice(0, 3).map((deck) => (
               <Link to={`/deck/${deck.id}`} key={deck.id}>
-                <div className="bg-[#252525] rounded-xl p-4">
+                <div className="bg-[#252525] rounded-xl p-4 mb-2">
                   <div className="flex justify-between items-center">
                     <div>
                       <h3 className="font-medium">{deck.title}</h3>
@@ -223,7 +223,7 @@ export default function HomePage() {
           <div className="space-y-3">
             {folders.slice(0, 3).map((folder) => (
               <Link to={`/edit-folder/${folder.id}`} key={folder.id}>
-                <div className="bg-[#252525] rounded-xl p-4">
+                <div className="bg-[#252525] rounded-xl p-4 mb-2">
                   <div className="flex justify-between items-center">
                     <div>
                       <h3 className="font-medium">{folder.name}</h3>
