@@ -125,10 +125,10 @@ export default function DeckPage() {
   const studyModes = [
     { id: "flashcards", name: "Flashcards", icon: "🃏", color: "bg-[#333333]", textColor: "text-[#F5B700]" },
     { id: "learn", name: "Learn", icon: "🔄", color: "bg-[#333333]", textColor: "text-[#F5B700]" },
-    { id: "test", name: "Test", icon: "📝", color: "bg-[#333333]", textColor: "text-[#F5B700]" },
-    { id: "blocks", name: "Blocks", icon: "🧩", color: "bg-[#333333]", textColor: "text-[#F5B700]", isNew: true },
-    { id: "blast", name: "Blast", icon: "🚀", color: "bg-[#333333]", textColor: "text-[#F5B700]" },
-    { id: "match", name: "Match", icon: "🔍", color: "bg-[#333333]", textColor: "text-[#F5B700]" },
+    // { id: "test", name: "Test", icon: "📝", color: "bg-[#333333]", textColor: "text-[#F5B700]" },
+    // { id: "blocks", name: "Blocks", icon: "🧩", color: "bg-[#333333]", textColor: "text-[#F5B700]", isNew: true },
+    // { id: "blast", name: "Blast", icon: "🚀", color: "bg-[#333333]", textColor: "text-[#F5B700]" },
+    // { id: "match", name: "Match", icon: "🔍", color: "bg-[#333333]", textColor: "text-[#F5B700]" },
   ]
 
   if (loading) {
@@ -165,7 +165,7 @@ export default function DeckPage() {
 
         {/* Action Buttons */}
         <div className="flex gap-2 px-4 py-2">
-          <Button
+          {/* <Button
             variant="outline"
             size="sm"
             className="rounded-xl bg-[#333333] border-none text-[#F5B700]"
@@ -176,7 +176,7 @@ export default function DeckPage() {
           <Button variant="outline" size="sm" className="rounded-xl bg-[#333333] border-none text-white">
             <Share2 className="h-4 w-4 mr-1" />
             Share
-          </Button>
+          </Button> */}
           <Button 
             variant="outline" 
             size="sm" 
@@ -189,14 +189,14 @@ export default function DeckPage() {
           <Button
             variant="outline"
             size="sm"
-            className="rounded-xl bg-[#333333] border-none text-red-400 ml-auto"
+            className="rounded-xl bg-[#333333] border-none text-red-400"
             onClick={() => setShowDeleteDialog(true)}
           >
             Delete
           </Button>
-          <Button variant="outline" size="sm" className="rounded-xl bg-[#333333] border-none text-white">
+          {/* <Button variant="outline" size="sm" className="rounded-xl bg-[#333333] border-none text-white">
             <MoreHorizontal className="h-4 w-4" />
-          </Button>
+          </Button> */}
         </div>
 
         {/* Stats */}
@@ -332,9 +332,6 @@ export default function DeckPage() {
               <div className="flex justify-between items-start">
                 <h3 className="font-medium text-lg">{card.term}</h3>
                 <div className="flex gap-2">
-                  <button onClick={() => handleMasteryUpdate(card.id, (card.mastery || 0) + 1)}>
-                    <Star className={`h-5 w-5 ${(card.mastery || 0) >= 4 ? "text-[#F5B700]" : "text-gray-400"}`} />
-                  </button>
                   <button onClick={() => handleSpeak(card.term)}>
                     <Volume2 className="h-5 w-5 text-gray-400" />
                   </button>

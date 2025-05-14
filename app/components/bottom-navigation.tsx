@@ -1,13 +1,21 @@
 "use client"
 
 import { Home, BookOpen, Plus, MessageSquare, User, Search } from "lucide-react"
-import { Link } from "react-router"
+import { Link, useLocation } from "react-router"
 import { useState } from "react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 
 export default function BottomNavigation() {
-  const [activeTab, setActiveTab] = useState("home")
   const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const location = useLocation()
+  const currentPath = location.pathname
+
+  const isActive = (path: string) => {
+    if (path === "/") {
+      return currentPath === "/"
+    }
+    return currentPath.startsWith(path)
+  }
 
   return (
     <>
@@ -16,8 +24,7 @@ export default function BottomNavigation() {
         <div className="flex items-center justify-around h-full">
           <Link
             to="/"
-            className={`flex flex-col items-center ${activeTab === "home" ? "text-[#F5B700]" : "text-gray-400"}`}
-            onClick={() => setActiveTab("home")}
+            className={`flex flex-col items-center ${isActive("/") ? "text-[#F5B700]" : "text-gray-400"}`}
           >
             <Home className="h-5 w-5" />
             <span className="text-xs mt-1">Home</span>
@@ -25,8 +32,7 @@ export default function BottomNavigation() {
 
           <Link
             to="/collection"
-            className={`flex flex-col items-center ${activeTab === "collection" ? "text-[#F5B700]" : "text-gray-400"}`}
-            onClick={() => setActiveTab("collection")}
+            className={`flex flex-col items-center ${isActive("/collection") ? "text-[#F5B700]" : "text-gray-400"}`}
           >
             <BookOpen className="h-5 w-5" />
             <span className="text-xs mt-1">Library</span>
@@ -73,16 +79,14 @@ export default function BottomNavigation() {
 
           <Link
             to="/ai-chat"
-            className={`flex flex-col items-center ${activeTab === "ai-chat" ? "text-[#F5B700]" : "text-gray-400"}`}
-            onClick={() => setActiveTab("ai-chat")}
+            className={`flex flex-col items-center ${isActive("/ai-chat") ? "text-[#F5B700]" : "text-gray-400"}`}
           >
             <MessageSquare className="h-5 w-5" />
             <span className="text-xs mt-1">AI Chat</span>
           </Link>
           <Link
             to="/dictionary"
-            className={`flex flex-col items-center ${activeTab === "dictionary" ? "text-[#F5B700]" : "text-gray-400"}`}
-            onClick={() => setActiveTab("dictionary")}
+            className={`flex flex-col items-center ${isActive("/dictionary") ? "text-[#F5B700]" : "text-gray-400"}`}
           >
             <Search className="h-5 w-5" />
             <span className="text-xs mt-1">Dictionary</span>

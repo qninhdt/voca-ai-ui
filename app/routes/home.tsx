@@ -117,16 +117,6 @@ export default function HomePage() {
     })
   }
 
-  const recommendedSets = [
-    { id: "5", title: "600 từ vựng toeic", terms: 305, author: "hgnam92" },
-    { id: "6", title: "600 TOEIC vocabulary - 600", terms: 600, author: "PracticalEnglishVn", isTeacher: true },
-  ]
-
-  const trendingSets = [
-    { id: "7", title: "Unit 11. Travelling in the future - Tiếng Anh 7 Global Success", terms: 64 },
-    { id: "8", title: "Tiếng anh", terms: 83 },
-  ]
-
   return (
     <div className="flex flex-col min-h-full bg-[#1A1A1A] text-white pb-16">
       {/* Header */}
@@ -165,7 +155,7 @@ export default function HomePage() {
       {/* Recent Sets */}
       <div className="px-4 py-2">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-medium">Recent Sets</h2>
+          <h2 className="text-lg font-medium">Recent Decks</h2>
           <Link to="/collection">
             <Button variant="ghost" className="text-[#F5B700] hover:text-[#E5A700]">
               View All
@@ -256,66 +246,6 @@ export default function HomePage() {
           </div>
         )}
       </div>
-
-      {/* Recommended Sets */}
-      <section className="px-4 py-3">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center">
-            <Sparkles className="h-5 w-5 text-[#F5B700] mr-2" />
-            <h2 className="text-lg font-medium">Recommended for You</h2>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          {recommendedSets.map((set) => (
-            <Link to={`/deck/${set.id}`} key={set.id} className="block">
-              <div className="bg-[#252525] rounded-xl p-4 h-full flex flex-col justify-between">
-                <div>
-                  <h3 className="font-medium mb-2 line-clamp-2">{set.title}</h3>
-                  <Badge variant="outline" className="bg-[#333333] text-white border-none">
-                    {set.terms} terms
-                  </Badge>
-                </div>
-                <div className="mt-4 flex items-center gap-2">
-                  <Avatar className="h-6 w-6">
-                    <AvatarFallback className="bg-[#F5B700] text-black text-xs">{set.author.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <span className="text-sm text-gray-400">{set.author}</span>
-                  {set.isTeacher && <Badge className="bg-[#F5B700] text-black text-xs ml-auto">Teacher</Badge>}
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      {/* Trending Sets */}
-      <section className="px-4 py-3">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center">
-            <TrendingUp className="h-5 w-5 text-[#F5B700] mr-2" />
-            <h2 className="text-lg font-medium">Trending Now</h2>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          {trendingSets.map((set) => (
-            <Link to={`/deck/${set.id}`} key={set.id} className="block">
-              <div className="bg-[#252525] rounded-xl p-4 h-full flex flex-col justify-between">
-                <div>
-                  <h3 className="font-medium mb-2 line-clamp-2">{set.title}</h3>
-                  <Badge variant="outline" className="bg-[#333333] text-white border-none">
-                    {set.terms} terms
-                  </Badge>
-                </div>
-                <div className="mt-4">
-                  <div className="bg-[#333333] h-1 w-full rounded-full overflow-hidden">
-                    <div className="bg-[#F5B700] h-full rounded-full" style={{ width: "65%" }}></div>
-                  </div>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
     </div>
   )
 }

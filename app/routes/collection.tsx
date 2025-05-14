@@ -242,7 +242,7 @@ export default function CollectionPage() {
           ) : (
             <div className="space-y-4">
               {folders.map((folder) => (
-                <Link to={`/edit-folder/${folder.id}`} key={folder.id}>
+                <Link to={`/folder/${folder.id}`} key={folder.id}>
                   <div className="bg-[#252525] rounded-xl p-4">
                     <div className="flex justify-between items-center">
                       <div>

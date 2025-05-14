@@ -5,6 +5,7 @@ export default [
   route("welcome", "routes/welcome.tsx"),
   route("ai-chat", "routes/ai-chat.tsx"),
   route("collection", "routes/collection.tsx"),
+  route("folder/:id", "routes/folder.tsx"),
   route("deck/:id", "routes/deck.tsx"),
   route("edit-deck/:id", "routes/edit-deck.tsx"),
   route("edit-folder/:id", "routes/edit-folder.tsx"),

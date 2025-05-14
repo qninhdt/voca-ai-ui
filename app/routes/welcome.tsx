@@ -32,12 +32,12 @@ export default function WelcomePage() {
           >
             Log In
           </Button>
-          <Button
+        <Button
             onClick={() => navigate('/signup')}
             className="w-full h-12 bg-[#252525] hover:bg-[#333333] text-yellow-400 font-bold border border-yellow-400 rounded-xl"
-          >
+        >
             Sign Up
-          </Button>
+        </Button>
         </div>
 
         {/* Terms */}

@@ -122,6 +122,16 @@ export interface SessionTrack {
   masteredCount: number;
 }
 
+export interface LearnedWord {
+  id: string;
+  word: string;
+  meaning: string;
+  mastery: number;
+  lastLearned: { seconds: number };
+  deckId: string;
+  deckTitle: string;
+}
+
 // Deck CRUD operations
 export const createDeck = async (deck: Omit<Deck, "id">, userId: string) => {
   const colRef = collection(db, "decks");
@@ -362,4 +372,36 @@ export const loginWithEmail = async (email: string, password: string) => {
     password
   );
   return userCredential.user;
+};
+
+export const getRecentlyLearnedWords = async (
+  userId: string,
+  limit: number = 10
+): Promise<LearnedWord[]> => {
+  const decks = await getUserDecks(userId);
+  const learnedWords: LearnedWord[] = [];
+
+  // Collect all cards from all decks
+  for (const deck of decks) {
+    if (!deck.cards) continue;
+
+    for (const card of deck.cards) {
+      if (card.mastery && card.mastery > 0) {
+        learnedWords.push({
+          id: card.id,
+          word: card.term,
+          meaning: card.definition,
+          mastery: card.mastery,
+          lastLearned: card.lastLearned || { seconds: 0 },
+          deckId: deck.id,
+          deckTitle: deck.title || "Untitled Deck",
+        });
+      }
+    }
+  }
+
+  // Sort by last learned date (most recent first) and limit the results
+  return learnedWords
+    .sort((a, b) => b.lastLearned.seconds - a.lastLearned.seconds)
+    .slice(0, limit);
 };

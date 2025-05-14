@@ -5,6 +5,13 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { useNavigate } from "react-router"
 import ProfileDrawer from "@/components/profile-drawer"
+import { client, VOCA_AI_SYSTEM_PROMPT } from "@/lib/chatbot"
+import { speakText, stopSpeaking } from "@/lib/utils"
+import { auth, getRecentlyLearnedWords, type LearnedWord } from "@/lib/firebase"
+import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter"
+import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism"
 
 type Message = {
   id: string
@@ -13,68 +20,35 @@ type Message = {
   timestamp: Date
 }
 
-type Assistant = {
-  id: string
-  name: string
-  description: string
-  avatar?: string
-}
-
 export default function AIChatPage() {
   const navigate = useNavigate()
   const [message, setMessage] = useState("")
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      content:
-        "Describe to me the basic principles of healthy eating briefly, but with all the important aspects, please. Also you can tell me a little more about the topic of sports and training",
-      sender: "user",
-      timestamp: new Date(Date.now() - 1000 * 60 * 5),
-    },
-    {
-      id: "2",
-      content:
-        "Basic principles of a healthy diet: Balance. Make sure your diet contains all the essential macro and micronutrients in the correct proportions: carbohydrates, proteins, fats, vitamins, and minerals. It is important to maintain a balance of calories to meet your body's needs, but not to overeat.",
-      sender: "ai",
-      timestamp: new Date(Date.now() - 1000 * 60 * 4),
-    },
-    {
-      id: "3",
-      content: "Tell me more about it, please",
-      sender: "user",
-      timestamp: new Date(Date.now() - 1000 * 60 * 3),
-    },
-  ])
-
-  const [selectedAssistant, setSelectedAssistant] = useState<Assistant>({
-    id: "1",
-    name: "Study Coach",
-    description: "Learning strategies & study tips",
-    avatar: "/placeholder.svg?height=40&width=40",
-  })
-
+  const [messages, setMessages] = useState<Message[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [isSpeaking, setIsSpeaking] = useState(false)
+  const [recentWords, setRecentWords] = useState<LearnedWord[]>([])
+  const [isLoadingWords, setIsLoadingWords] = useState(true)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  const assistants: Assistant[] = [
-    {
-      id: "1",
-      name: "Study Coach",
-      description: "Learning strategies & study tips",
-      avatar: "/placeholder.svg?height=40&width=40",
-    },
-    {
-      id: "2",
-      name: "Language Tutor",
-      description: "Vocabulary & grammar help",
-      avatar: "/placeholder.svg?height=40&width=40",
-    },
-    {
-      id: "3",
-      name: "Quiz Master",
-      description: "Test preparation & practice",
-      avatar: "/placeholder.svg?height=40&width=40",
-    },
-  ]
+  useEffect(() => {
+    const loadRecentWords = async () => {
+      try {
+        const user = auth.currentUser
+        if (!user) {
+          navigate('/login')
+          return
+        }
+        const words = await getRecentlyLearnedWords(user.uid)
+        setRecentWords(words)
+      } catch (error) {
+        console.error('Error loading recent words:', error)
+      } finally {
+        setIsLoadingWords(false)
+      }
+    }
+
+    loadRecentWords()
+  }, [navigate])
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -84,30 +58,60 @@ export default function AIChatPage() {
     scrollToBottom()
   }, [messages])
 
-  const handleSendMessage = () => {
-    if (message.trim()) {
-      const newMessage: Message = {
-        id: Date.now().toString(),
-        content: message,
-        sender: "user",
+  const handleSendMessage = async (text: string = message) => {
+    if (!text.trim() || isLoading) return
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      content: text,
+      sender: "user",
+      timestamp: new Date(),
+    }
+
+    setMessages(prev => [...prev, userMessage])
+    setMessage("")
+    setIsLoading(true)
+
+    try {
+      const response = await client.chat.completions.create({
+        model: "gpt-4.1-mini",
+        messages: [
+          {
+            role: "system" as const,
+            content: VOCA_AI_SYSTEM_PROMPT
+          },
+          ...messages.map(msg => ({
+            role: msg.sender === "user" ? "user" as const : "assistant" as const,
+            content: msg.content
+          })),
+          {
+            role: "user" as const,
+            content: text
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 500
+      })
+
+      const aiMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: response.choices[0].message.content || "I apologize, but I couldn't generate a response.",
+        sender: "ai",
         timestamp: new Date(),
       }
 
-      setMessages([...messages, newMessage])
-      setMessage("")
-
-      // Simulate AI response after a short delay
-      setTimeout(() => {
-        const aiResponse: Message = {
-          id: (Date.now() + 1).toString(),
-          content:
-            "I'm your AI study assistant. I can help you learn more effectively by providing study techniques, explaining concepts, and creating practice materials tailored to your needs.",
-          sender: "ai",
-          timestamp: new Date(),
-        }
-
-        setMessages((prev) => [...prev, aiResponse])
-      }, 1000)
+      setMessages(prev => [...prev, aiMessage])
+    } catch (error) {
+      console.error("Error getting AI response:", error)
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: "I apologize, but I encountered an error. Please try again.",
+        sender: "ai",
+        timestamp: new Date(),
+      }
+      setMessages(prev => [...prev, errorMessage])
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -116,6 +120,31 @@ export default function AIChatPage() {
       e.preventDefault()
       handleSendMessage()
     }
+  }
+
+  const handleTextToSpeech = async (text: string) => {
+    if (isSpeaking) {
+      await stopSpeaking()
+      setIsSpeaking(false)
+      return
+    }
+
+    setIsSpeaking(true)
+    await speakText(text)
+    setIsSpeaking(false)
+  }
+
+  const handleCopyMessage = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+    } catch (error) {
+      console.error("Failed to copy text:", error)
+    }
+  }
+
+  const handleWordClick = (word: LearnedWord) => {
+    const query = `Can you explain the word "${word.word}"?`
+    handleSendMessage(query)
   }
 
   return (
@@ -130,8 +159,8 @@ export default function AIChatPage() {
             <span className="text-black font-bold">✦</span>
           </div>
           <div>
-            <div className="font-medium">{selectedAssistant.name}</div>
-            <div className="text-xs text-gray-400">{selectedAssistant.description}</div>
+            <div className="font-medium">VocaAI</div>
+            <div className="text-xs text-gray-400">Vocabulary learning assistant</div>
           </div>
         </div>
         <ProfileDrawer />
@@ -143,8 +172,8 @@ export default function AIChatPage() {
           <div key={msg.id} className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"} mb-4`}>
             {msg.sender === "ai" && (
               <Avatar className="h-8 w-8 mr-2 mt-1 flex-shrink-0">
-                <AvatarImage src={selectedAssistant.avatar || "/placeholder.svg"} alt={selectedAssistant.name} />
-                <AvatarFallback className="bg-[#F5B700] text-black">{selectedAssistant.name.charAt(0)}</AvatarFallback>
+                <AvatarImage src="/placeholder.svg" alt="VocaAI" />
+                <AvatarFallback className="bg-[#F5B700] text-black">V</AvatarFallback>
               </Avatar>
             )}
             <div
@@ -154,7 +183,53 @@ export default function AIChatPage() {
                   : "bg-[#252525] text-white rounded-bl-none"
               }`}
             >
-              <p>{msg.content}</p>
+              {msg.sender === "ai" ? (
+                <div className="prose prose-invert max-w-none">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      code({ node, inline, className, children, ...props }) {
+                        const match = /language-(\w+)/.exec(className || "");
+                        return !inline && match ? (
+                          <SyntaxHighlighter
+                            style={vscDarkPlus}
+                            language={match[1]}
+                            PreTag="div"
+                            {...props}
+                          >
+                            {String(children).replace(/\n$/, "")}
+                          </SyntaxHighlighter>
+                        ) : (
+                          <code className={className} {...props}>
+                            {children}
+                          </code>
+                        );
+                      },
+                      p: ({ children }) => <p className="mb-4">{children}</p>,
+                      ul: ({ children }) => <ul className="list-disc pl-4 mb-4">{children}</ul>,
+                      ol: ({ children }) => <ol className="list-decimal pl-4 mb-4">{children}</ol>,
+                      li: ({ children }) => <li className="mb-1">{children}</li>,
+                      h1: ({ children }) => <h1 className="text-2xl font-bold mb-4">{children}</h1>,
+                      h2: ({ children }) => <h2 className="text-xl font-bold mb-3">{children}</h2>,
+                      h3: ({ children }) => <h3 className="text-lg font-bold mb-2">{children}</h3>,
+                      blockquote: ({ children }) => (
+                        <blockquote className="border-l-4 border-gray-500 pl-4 italic mb-4">
+                          {children}
+                        </blockquote>
+                      ),
+                      a: ({ href, children }) => (
+                        <a href={href} className="text-[#F5B700] hover:underline" target="_blank" rel="noopener noreferrer">
+                          {children}
+                        </a>
+                      ),
+                    }}
+                  >
+                    {msg.content}
+                  </ReactMarkdown>
+                </div>
+              ) : (
+                <p>{msg.content}</p>
+              )}
             </div>
             {msg.sender === "user" && (
               <Avatar className="h-8 w-8 ml-2 mt-1 flex-shrink-0">
@@ -165,20 +240,37 @@ export default function AIChatPage() {
           </div>
         ))}
 
+        {/* Loading indicator */}
+        {isLoading && (
+          <div className="flex justify-start mb-4">
+            <Avatar className="h-8 w-8 mr-2 mt-1 flex-shrink-0">
+              <AvatarImage src="/placeholder.svg" alt="VocaAI" />
+              <AvatarFallback className="bg-[#F5B700] text-black">V</AvatarFallback>
+            </Avatar>
+            <div className="bg-[#252525] text-white rounded-2xl rounded-bl-none p-3">
+              <div className="flex space-x-2">
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></div>
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></div>
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Message actions for AI messages */}
-        {messages.length > 0 && messages[messages.length - 1].sender === "ai" && (
+        {messages.length > 0 && messages[messages.length - 1].sender === "ai" && !isLoading && (
           <div className="flex items-center space-x-2 ml-10">
-            <button className="p-2 rounded-full bg-[#252525] hover:bg-[#333333]">
+            <button 
+              className="p-2 rounded-full bg-[#252525] hover:bg-[#333333]"
+              onClick={() => handleCopyMessage(messages[messages.length - 1].content)}
+            >
               <Copy className="h-4 w-4" />
             </button>
-            <button className="p-2 rounded-full bg-[#252525] hover:bg-[#333333]">
-              <ThumbsUp className="h-4 w-4" />
-            </button>
-            <button className="p-2 rounded-full bg-[#252525] hover:bg-[#333333]">
+            <button 
+              className={`p-2 rounded-full ${isSpeaking ? "bg-[#F5B700]" : "bg-[#252525] hover:bg-[#333333]"}`}
+              onClick={() => handleTextToSpeech(messages[messages.length - 1].content)}
+            >
               <Volume2 className="h-4 w-4" />
-            </button>
-            <button className="p-2 rounded-full bg-[#252525] hover:bg-[#333333]">
-              <Share2 className="h-4 w-4" />
             </button>
           </div>
         )}
@@ -188,44 +280,56 @@ export default function AIChatPage() {
 
       {/* Bottom section - Fixed */}
       <div className="border-t border-[#333333] bg-[#1A1A1A] z-10">
-        {/* Quick prompts */}
-        <div className="px-4 py-2 flex space-x-2 overflow-x-auto">
-          <Button variant="outline" size="sm" className="bg-[#252525] border-none text-white whitespace-nowrap">
-            Study tips
-          </Button>
-          <Button variant="outline" size="sm" className="bg-[#252525] border-none text-white whitespace-nowrap">
-            Explain concept
-          </Button>
-          <Button variant="outline" size="sm" className="bg-[#252525] border-none text-white whitespace-nowrap">
-            Create flashcards
-          </Button>
-          <Button variant="outline" size="sm" className="bg-[#252525] border-none text-white whitespace-nowrap">
-            Quiz me
-          </Button>
+        {/* Recent words */}
+        <div className="px-4 py-2">
+          <h3 className="text-sm font-medium text-gray-400 mb-2">Recently Learned Words</h3>
+          {isLoadingWords ? (
+            <div className="flex justify-center py-2">
+              <div className="flex space-x-2">
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></div>
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></div>
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></div>
+              </div>
+            </div>
+          ) : recentWords.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {recentWords.map((word) => (
+                <Button
+                  key={word.id}
+                  variant="outline"
+                  size="sm"
+                  className="bg-[#252525] border-none text-white hover:bg-[#333333]"
+                  onClick={() => handleWordClick(word)}
+                >
+                  {word.word}
+                </Button>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-400 text-center py-2">No words learned yet. Start learning to see your progress here!</p>
+          )}
         </div>
 
         {/* Input area */}
-        <div className="p-4">
+        <div className="p-4 mb-16">
           <div className="relative flex items-center">
             <button className="absolute left-3 p-1">
               <Plus className="h-5 w-5 text-gray-400" />
             </button>
             <Input
               type="text"
-              placeholder="Send message..."
+              placeholder="Ask about any word..."
               className="w-full bg-[#252525] border-none pl-10 pr-10 py-3 rounded-full text-white"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               onKeyDown={handleKeyPress}
+              disabled={isLoading}
             />
             <div className="absolute right-3 flex items-center space-x-2">
-              <button className="p-1">
-                <Mic className="h-5 w-5 text-gray-400" />
-              </button>
               <button
-                className={`p-1 ${message.trim() ? "text-[#F5B700]" : "text-gray-400"}`}
-                onClick={handleSendMessage}
-                disabled={!message.trim()}
+                className={`p-1 ${message.trim() && !isLoading ? "text-[#F5B700]" : "text-gray-400"}`}
+                onClick={() => handleSendMessage()}
+                disabled={!message.trim() || isLoading}
               >
                 <Send className="h-5 w-5" />
               </button>
